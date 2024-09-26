@@ -138,10 +138,6 @@ class COCOConverter(AnnotationConverter):
                 if filename not in annotations_by_image:
                     annotations_by_image[filename] = []
                 annotations_by_image[filename].append(yolo_annotation)
-            # yolo_output_path=os.path.join(self.output_dir,os.path.splitext(os.path.basename(self.input_file))[0]+'.txt')
-            # with open(yolo_output_path,'w') as f:
-            #         for data in annotations:
-            #             f.write(data[-1]+'\n')
             for filename, yolo_annotations in annotations_by_image.items():
                 output_path = os.path.join(self.output_dir, os.path.splitext(filename.strip())[0] + '.txt')
                 with open(output_path, 'w') as f:
@@ -176,50 +172,6 @@ class PASCALVOCCOnverter(AnnotationConverter):
             return ValueError(f"Unsupported format {target_format}")
     
     def convert_to_coco(self):
-        # for obj in self.data.findall("object"):
-        #     class_name=obj.find('name').text
-        #     if class_name not in self.category_map:
-        #         self.category_map[class_name]=len(self.category_map)+1
-        #         self.coco_data["categories"].append({
-        #             "id":self.category_map[class_name],
-        #             "name":class_name,
-        #             "supercategory":class_name
-        #         })
-        # filename=self.data.find('filename').text
-        # size=self.data.find('size')
-        # width=int(size.find('width').text)
-        # height=int(size.find('height').text)
-
-        # self.coco_data['images'].append({
-        #     "id":self.image_id,
-        #     "file_name":filename,
-        #     "width":width,
-        #     "height":height,
-        #     "date_captured": "2024-08-30"
-        # })
-        # for obj in self.data.findall("object"):
-        #     class_name=obj.find('name').text
-        #     bndbox=obj.find('bndbox')
-        #     xmin=int(bndbox.find('xmin').text)
-        #     ymin=int(bndbox.find('ymin').text)
-        #     xmax=int(bndbox.find('xmax').text)
-        #     ymax=int(bndbox.find('ymax').text)
-        #     bbox=[xmin,ymin,xmax-xmin,ymax-ymin]
-        #     area=(xmax-xmin)*(ymax-ymin)
-
-        #     self.coco_data['annotations'].append({
-        #         "id":self.annotation_id,
-        #         "image_id":self.image_id,
-        #         "category_id":self.category_map[class_name],
-        #         "bbox":bbox,
-        #         "area":area,
-        #         "segmentation":[],
-        #         "iscrowd":0,
-        #     })
-        #     self.annotation_id+=1
-        # self.image_id+=1
-        # return self.coco_data
-        # print(self.input_file)
         
         if not os.path.isfile(self.output_file):
             coco_data = {
@@ -304,16 +256,10 @@ class PASCALVOCCOnverter(AnnotationConverter):
                     if seg_element is not None and seg_element.text:
                         segmentation_str = seg_element.text.replace(',', ' ')
                         segmentation_points = list(map(float, segmentation_str.split()))
-                        # Convert the string to a list of floats (assuming space-separated values)
-                        # segmentation_points = list(map(float, seg_element.text.split(',')))
-                        # Ensure the points form a valid polygon (must be even number of coordinates)
                         if len(segmentation_points) % 2 == 0:
                             segmentation = [segmentation_points]  # Wrap in a list for COCO format
                         else:
                             print(f"Invalid segmentation data for object in {filename}")
-                # if self.task=="instance_segmentation" and 'segmentation' in obj.attrib and obj.find('segmentation').text:
-                # # Convert segmentation data if available
-                #     segmentation = [list(map(float, obj.find('segmentation').text.split()))]
 
                 annotation_entry = {
                 "id": len(coco_data['annotations']) + 1,
@@ -364,16 +310,16 @@ class PASCALVOCCOnverter(AnnotationConverter):
                 yolo_annotation=f"{class_index} {x_center:.3f} {y_center:.3f} {bbox_width:.3f} {bbox_height:.3f}"
                 yolo_annotations.append(yolo_annotation)
             elif self.task == 'instance_segmentation':
-                # Check if segmentation data is present
+                
                 seg_element = obj.find('segmentation')
                 if seg_element is not None and seg_element.text:
-                # Replace commas with spaces and split by space
+               
                     segmentation_str = seg_element.text.replace(',', ' ')
                     polygon = list(map(float, segmentation_str.split()))
-                    # polygon = list(map(float, segmentation.text.split()))
+                   
                     normalized_polygon = []
 
-                    # Normalize the polygon coordinates
+            
                     for i in range(0, len(polygon), 2):
                         x_normalized = polygon[i] / width
                         y_normalized = polygon[i + 1] / height
@@ -384,12 +330,12 @@ class PASCALVOCCOnverter(AnnotationConverter):
         classes_file_path = os.path.join(self.output_dir, 'classes.txt')
         existing_classes = set()
 
-        # Read existing class names
+
         if os.path.isfile(classes_file_path):
             with open(classes_file_path, 'r') as classes_file:
                 existing_classes = set(line.strip() for line in classes_file)
 
-        # Append new class names
+ 
         with open(classes_file_path, 'a') as classes_file:
             for class_name in class_names:
                 if class_name not in existing_classes:
@@ -468,70 +414,17 @@ class YOLOConverter(AnnotationConverter):
             return self.convert_to_voc()
         else:
             raise ValueError(f"Unsupported target format: {target_format}")
-        
-    # def convert_to_coco(self):
-    #     width, height = self.get_size()
-    #     class_to_index=self.load_classes()
-    #     coco_data={
-    #          "info": {
-    #             "year": 2024,
-    #             "version": "1.0",
-    #             "description": "Converted COCO dataset",
-    #             "contributor": "Himanshi Sharma",
-    #             "url": "http://example.com",
-    #             "date_created": "2024-09-01"
-    #         },
-    #         "licenses": [{
-    #             "id": 1,
-    #             "name": "Attribution-NonCommercial",
-    #             "url": "http://creativecommons.org/licenses/by-nc/2.0/"
-    #         }],
-    #         "images": [],
-    #         "annotations": [],
-    #         "categories": []
-    #     }
-
-    #     for image_file in set([os.path.splitext(os.path.basename(self.input_file))[0]]):
-    #         coco_data["images"].append({
-    #             "id":self.image_id,
-    #             "file_name":image_file,
-    #             "height":height,
-    #             "width":width,
-    #             "date_captured": "2024-08-30"
-
-    #         })
-        
-    #     for line in self.data:
-    #         class_idx, x_center, y_center, bbox_width, bbox_height = map(float, line.split())
-    #         x_min = (x_center - bbox_width / 2) * width
-    #         y_min = (y_center - bbox_height / 2) * height
-    #         bbox_width = bbox_width * width
-    #         bbox_height = bbox_height * height
-
-    #         coco_data["annotations"].append({
-    #             "id": self.annotation_id,
-    #             "image_id": self.image_id,
-    #             "category_id": int(class_idx),
-    #             "bbox": [x_min, y_min, bbox_width, bbox_height],
-    #             "area": bbox_width * bbox_height,
-    #             "segmentation": [],
-    #             "iscrowd": 0
-    #         })
-    #         self.annotation_id += 1
-            
-    #     coco_data['categories'] = [{"id": idx, "name": name, "supercategory": name} for name, idx in class_to_index.items()]
-    #     self.image_id+=1
+      
     def convert_to_coco(self):
-    # Output file path
 
         coco_output_file = os.path.join(self.output_dir, "converted_coco_dataset.json")
 
-        # Load existing COCO data if the file exists
+
         if os.path.exists(coco_output_file):
             with open(coco_output_file, "r") as f:
                 coco_data = json.load(f)
         else:
-            # Initialize COCO data structure if file does not exist
+      
             coco_data = {
                 "info": {
                     "year": 2024,
@@ -576,14 +469,10 @@ class YOLOConverter(AnnotationConverter):
                 "date_captured": "2024-08-30"
             })
 
-        # Append annotations
+
         for line in self.data:
 
-            # class_idx, x_center, y_center, bbox_width, bbox_height = map(float, line.split())
-            # x_min = (x_center - bbox_width / 2) * width
-            # y_min = (y_center - bbox_height / 2) * height
-            # bbox_width = bbox_width * width
-            # bbox_height = bbox_height * height
+        
             values = list(map(float, line.split()))
             
             # YOLO format values
@@ -596,7 +485,7 @@ class YOLOConverter(AnnotationConverter):
                 bbox_width = bbox_width * width
                 bbox_height = bbox_height * height
 
-                # Prepare the COCO annotation (object detection)
+
                 annotation = {
                     "id": self.annotation_id,
                     "category_id": class_idx,
@@ -607,7 +496,7 @@ class YOLOConverter(AnnotationConverter):
                     "bbox": [x_min, y_min, bbox_width, bbox_height],
                     
                    
-                     # No segmentation for object detection
+
                 }
             elif self.task == "instance_segmentation":
                             
@@ -628,8 +517,7 @@ class YOLOConverter(AnnotationConverter):
                         abs_polygon_points.extend([x, y])
                     
                     segmentation = [abs_polygon_points]
-                    
-                    # Calculate bbox from polygon points
+
                     x_coords = abs_polygon_points[::2]
                     y_coords = abs_polygon_points[1::2]
                     x_min = min(x_coords)
@@ -638,9 +526,9 @@ class YOLOConverter(AnnotationConverter):
                     bbox_height = max(y_coords) - y_min
                     
                 else:
-                    segmentation = []  # No valid polygon data found
+                    segmentation = []  
 
-                # Prepare COCO annotation (instance segmentation)
+  
                 annotation = {
                     "id": self.annotation_id,
                     "category_id": int(class_idx)+1,
@@ -653,15 +541,7 @@ class YOLOConverter(AnnotationConverter):
                 }
             else:
                 raise ValueError(f"Unsupported task: {task}")
-            # coco_data["annotations"].append({
-            #     "id": self.annotation_id,
-            #     "image_id": self.image_id,
-            #     "category_id": int(class_idx),
-            #     "bbox": [x_min, y_min, bbox_width, bbox_height],
-            #     "area": bbox_width * bbox_height,
-            #     "segmentation": [],
-            #     "iscrowd": 0
-            # })
+
             coco_data["annotations"].append(annotation)
             self.annotation_id += 1
 
@@ -759,32 +639,10 @@ class YOLOConverter(AnnotationConverter):
                     segmentation = ET.SubElement(obj, "segmentation")
                     segmentation.text = segmentation_str.strip()  # Remove any extra spaces
             annotations.append(ET.ElementTree(annotation))
-            #     class_idx, x_center, y_center, bbox_width, bbox_height = map(float, line.split())
-            #     x_min = (x_center - bbox_width / 2) * width
-            #     y_min = (y_center - bbox_height / 2) * height
-            #     x_max = (x_center + bbox_width / 2) * width
-            #     y_max = (y_center + bbox_height / 2) * height
-            #     obj = ET.SubElement(annotation, "object")
-                
-                
-            #     class_name = list(classes.keys())[list(classes.values()).index(int(class_idx))]  # Get the class name using class index
-            #     ET.SubElement(obj, "name").text = class_name # Assuming class_idx corresponds to the class name index
-            #     ET.SubElement(obj, "pose").text = "Unspecified"
-            #     ET.SubElement(obj, "truncated").text = '0'
-            #     ET.SubElement(obj, "difficult").text = '0'
-            #     bndbox = ET.SubElement(obj, "bndbox")
-            #     ET.SubElement(bndbox, "xmin").text = str(int(x_min))
-            #     ET.SubElement(bndbox, "ymin").text = str(int(y_min))
-            #     ET.SubElement(bndbox, "xmax").text = str(int(x_max))
-            #     ET.SubElement(bndbox, "ymax").text = str(int(y_max))
-            # annotations.append(ET.ElementTree(annotation))
+
         return annotations
 
     def save_data(self, annotations, target_format):
-        # if target_format == "COCO":
-        #     output_file = os.path.join(self.output_dir, os.path.splitext(os.path.basename(self.input_file))[0] + ".json")
-        #     with open(output_file, "w") as f:
-        #         json.dump(annotations, f, indent=4)
 
         if target_format == "VOC":
             for annotation in annotations:
