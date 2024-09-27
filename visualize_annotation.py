@@ -36,10 +36,7 @@ def visualize_coco(image_dir, annotation_path, task, output_dir):
                         cv2.polylines(image, [polygon.astype(np.int32)], isClosed=True, color=(0, 255, 0), thickness=2)
 
         ann_images[image_info['file_name'].strip()]={"coco":image}
-        # print(image_info['file_name'])
-        # output_image_path = os.path.join(output_dir, "coco_"+image_info['file_name'])
-        # cv2.imwrite(output_image_path, image)
-        # print(f"Saved visualization for {image_info['file_name']} to {output_image_path}")
+       
     return ann_images
 
 
@@ -54,7 +51,6 @@ def visualize_yolo(image_dir, annotation_dir, task, output_dir):
         classes = f.read().splitlines()
 
     for filename in os.listdir(annotation_dir):
-        # print(filename)
         if filename.endswith('.txt') and filename != 'classes.txt':
             image_name = filename.replace('.txt', '.jpg').strip()
            
@@ -90,16 +86,11 @@ def visualize_yolo(image_dir, annotation_dir, task, output_dir):
                     polygon[:, 1] *= image.shape[0]  # Scale y
                     cv2.polylines(image, [polygon.astype(np.int32)], isClosed=True, color=(0, 255, 0), thickness=2)
             ann_images[image_name]={"yolo":image}
-            # print(image_name)
-            # output_image_path = os.path.join(output_dir, "yolo_"+image_name)
-            # cv2.imwrite(output_image_path, image)
-            # print(f"Saved visualization for {image_name} to {output_image_path}")
     return ann_images
 
 def visualize_voc(image_dir, annotation_dir, task, output_dir):
     ann_images={}
     for filename in os.listdir(annotation_dir):
-        # print(filename)
         if filename.endswith('.xml'):
             tree = ET.parse(os.path.join(annotation_dir, filename.strip()))
             root = tree.getroot()
@@ -126,18 +117,11 @@ def visualize_voc(image_dir, annotation_dir, task, output_dir):
                     polygon = np.array([list(map(float, point.split(','))) for point in polygon_points]).reshape(-1, 2)
                     cv2.polylines(image, [polygon.astype(np.int32)], isClosed=True, color=(0, 255, 0), thickness=2)
             ann_images[image_name]={"voc":image}
-            # print(image_name)
-            # output_image_path = os.path.join(output_dir, "voc_"+image_name)
-            # cv2.imwrite(output_image_path, image)
-            # print(f"Saved visualization for {image_name} to {output_image_path}")
     return ann_images
 
 def write_outputs(ann_img,converted_ann_img,output_dir):
-    print(ann_img)
-    print(converted_ann_img)
-    print(output_dir)
+   
     for filename,img in ann_img.items():
-        print(filename)
         if filename not in converted_ann_img:
             print(f"Skipping {filename}, not found in converted annotations.")
             continue
